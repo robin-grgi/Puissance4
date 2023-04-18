@@ -24,45 +24,34 @@ def get_aligned_checkers(board, player):
            np.flatnonzero(player_aligned == 1) - np.flatnonzero(player_aligned == -1)
 
 
+def update_score(board, player, scores, scores_array, diagonal=False):
+    for_range = range(-(len(board) - 1), len(board) + 1) if diagonal else range(len(board))
+    for row in for_range:
+        play, opp = get_aligned_checkers(board.diagonal(row) if diagonal else board[row], player)
+        for score in play:
+            scores[0] += scores_array[0][min(len(scores_array[0]) - 1, score)]
+        for score in opp:
+            scores[1] += scores_array[1][min(len(scores_array[1]) - 1, score)]
+    return scores
+
+
 def evaluate_board(board, player, depth):
-    player_score, opponent_score = 0, 0
-    player_scores = np.array([0, 1, 10, 100, 1000])
-    opponent_scores = np.array([0, 2, 20, 200, 2000])
+    scores = [0, 0]
+    scores_array = [np.array([0, 1, 10, 100, 1000]), np.array([0, 2, 20, 200, 2000])]
 
     # horizontal check
-    for row in range(len(board)):
-        play, opp = get_aligned_checkers(board[row], player)
-        for score in play:
-            player_score += player_scores[min(len(player_scores) - 1, score)]
-        for score in opp:
-            opponent_score += opponent_scores[min(len(opponent_scores) - 1, score)]
+    scores = update_score(board, player, scores, scores_array)
 
     # vertical check
-    transposed_board = board.transpose()
-    for row in range(len(board)):
-        play, opp = get_aligned_checkers(transposed_board[row], player)
-        for score in play:
-            player_score += player_scores[min(len(player_scores) - 1, score)]
-        for score in opp:
-            opponent_score += opponent_scores[min(len(opponent_scores) - 1, score)]
+    scores = update_score(board.transpose(), player, scores, scores_array)
 
     # diagonal check (positive slope)
-    for row in range(-(len(board) - 1), len(board) + 1):
-        play, opp = get_aligned_checkers(board.diagonal(row), player)
-        for score in play:
-            player_score += player_scores[min(len(player_scores) - 1, score)]
-        for score in opp:
-            opponent_score += opponent_scores[min(len(opponent_scores) - 1, score)]
+    scores = update_score(board, player, scores, scores_array, diagonal=True)
 
     # diagonal check (negative slope)
-    for row in range(-(len(board) - 1), len(board) + 1):
-        play, opp = get_aligned_checkers(np.fliplr(board).diagonal(row), player)
-        for score in play:
-            player_score += player_scores[min(len(player_scores) - 1, score)]
-        for score in opp:
-            opponent_score += opponent_scores[min(len(opponent_scores) - 1, score)]
+    scores = update_score(np.fliplr(board), player, scores, scores_array, diagonal=True)
 
-    return (opponent_score - player_score) * depth
+    return (scores[1] - scores[0]) * depth
 
 
 def get_best_move(board, depth, alpha, beta, maximizing_player, current_player):
