@@ -1,12 +1,11 @@
 from fastapi import FastAPI, HTTPException
-import logging
 import functions
 
 app = FastAPI()
 
 
-def handle_error(statusCode, message):
-    raise HTTPException(status_code=statusCode, detail=message)
+def handle_error(status_code, message):
+    raise HTTPException(status_code=status_code, detail=message)
 
 
 def handle_invalid_board(board):
@@ -20,9 +19,9 @@ def handle_game_over(board, player):
     if game_over and status == "tie":
         handle_error(422, "Board full")
     elif game_over and status == "player":
-        handle_error(422, "player won")
-    elif game_over and status == "opponent":
         handle_error(422, "machine won")
+    elif game_over and status == "opponent":
+        handle_error(422, "human won")
 
 
 @app.get("/move")
