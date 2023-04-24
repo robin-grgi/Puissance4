@@ -1,9 +1,29 @@
 import numpy as np
-
+import re
 
 def get_possible_moves(board):
     return [col for col in range(7) if (board[:, col] == 0).any()]
 
+
+def is_board_valid(board_string):
+    if len(board_string) != 42:
+        return False, "Invalid board length"
+
+    for char in board_string:
+        if char not in ['m', 'h', '0']:
+            return False, "Invalid character in board"
+
+    for col in range(7):
+        start = col * 6
+
+        end = start + 6
+        if re.match("@*0[mh]",board_string[start:end]):
+            return False, "Invalid board configuration"
+
+    if board_string.find("h") != board_string.find("m") + 1:
+        return False, "Invalid game state"
+
+    return True, "Valid board"
 
 def create_board(board_string):
     board = np.zeros((6, 7), dtype=int)
@@ -108,34 +128,43 @@ def is_game_over(board):
     # horizontal check
     for row in range(len(board)):
         play, opp = get_aligned_checkers(board[row], 1)
-        if 4 in play or 4 in opp:
-            return True
+        if 4 in play:
+            return True, "player"
+        elif 4 in opp:
+            return True, "opponent"
+
 
     # vertical check
     transposed_board = board.transpose()
     for row in range(len(board)):
         play, opp = get_aligned_checkers(transposed_board[row], 1)
-        if 4 in play or 4 in opp:
-            return True
+        if 4 in play :
+            return True, "player"
+        elif 4 in opp:
+            return True, "opponent"
 
     # diagonal check (positive slope)
     for row in range(-(len(board) - 1), len(board) + 1):
         play, opp = get_aligned_checkers(board.diagonal(row), 1)
-        if 4 in play or 4 in opp:
-            return True
+        if 4 in play :
+            return True, "player"
+        elif 4 in opp:
+            return True, "opponent"
 
     # diagonal check (negative slope)
     for row in range(-(len(board) - 1), len(board) + 1):
         play, opp = get_aligned_checkers(np.fliplr(board).diagonal(row), 1)
-        if 4 in play or 4 in opp:
-            return True
+        if 4 in play :
+            return True, "player"
+        elif 4 in opp:
+            return True, "opponent"
 
     # Check for tie game
     if np.count_nonzero(board) == 42:
-        return True
+        return True, "tie"
 
     # Game is not over yet
-    return False
+    return False, None
 
 
 def play_move(board, player, col):
